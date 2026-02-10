@@ -4,7 +4,7 @@ import torch.nn as nn
 
 def conv9(in_ch, out_ch):
     # 9x9 with padding=4 keeps H,W unchanged
-    return nn.Conv2d(in_ch, out_ch, kernel_size=9, padding=4, bias=True)
+    return nn.Conv2d(in_ch, out_ch, kernel_size=9, padding='same', bias=True)
 
 
 class DenseUNet(nn.Module):
