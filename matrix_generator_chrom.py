@@ -57,7 +57,8 @@ class MatrixDataset(Dataset):
                  jitter=True, log_transform=False, symmetric=False):
         self.cool_files = cool_files
         self.mats = [load_npz(c) for c in cool_files]
-        chrom = os.path.basename(cool_files[0]).split('.')[0]
+        # chrom = os.path.basename(cool_files[0]).split('.')[0]
+        chrom = os.path.basename(cool_files[0]).split('.')[0].split('_')[0]
         self.target_file = target_file
         self.matrix_size = matrix_size
         self.step_size = step_size
@@ -83,7 +84,7 @@ class MatrixDataset(Dataset):
         else:
             # combine row and column indices but exclude pairs that are too far apart
             self.indices = [(i, j) for i in row_indices for j in col_indices if abs(i-j) < self.max_idx]
-        drop_indices_file = f'/scratch/users/kxt439/DeepLoop2.0/rep_coolers/{chrom}_drop_indices_symmetric.txt' if symmetric else f'/scratch/users/kxt439/DeepLoop2.0/rep_coolers/{chrom}_drop_indices.txt'
+        drop_indices_file = f'/home/kxt439/DeepLoop2.0/rep_coolers/{chrom}_drop_indices_symmetric.txt' if symmetric else f'/home/kxt439/DeepLoop2.0/rep_coolers/{chrom}_drop_indices.txt'
         if not os.path.exists(drop_indices_file):
             drop_indices = []
             for i, j in tqdm(self.indices):
