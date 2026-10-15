@@ -202,7 +202,7 @@ When comparing predictions, consider whether a model:
 
 The example notebook demonstrates this workflow. Model selection is intended as a qualitative aid when an external gold standard is unavailable, not as a replacement for independent validation when such data are available.
 
-## Google Colab / example notebook
+## Example notebook
 
 Open:
 

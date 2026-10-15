@@ -16,7 +16,7 @@ class DenseUNet(nn.Module):
       level3: pool(dense_in4)=h4 (29)-> e4 (32); dense_in5=cat(e4,h4)=> 61 @ 16
       level4: pool(dense_in5)=h5 (61)-> e5 (64)                    @ 8
 
-    Decoder (same-scale concats to avoid H/W mismatches):
+    Decoder:
       d4 @16: up(e5)=64 + dense_in5=61  => 125 -> 32 -> (32+61=93)->32 ->32
       d3 @32: up(d4)=32 + dense_in4=29  => 61  -> 16 -> (16+29=45)->16 ->16
       d2 @64: up(d3)=16 + dense_in3=13  => 29  -> 8  -> (8+13=21)->8  ->8
@@ -78,63 +78,64 @@ class DenseUNet(nn.Module):
         self.out = nn.Conv2d(13, out_channels, kernel_size=1, bias=True)  # conv2d_23
 
     def forward(self, x):
-        # -------- Encoder level 0 (H) --------
+        # Encoder level 0 (H)
         e1 = self.act(self.e1a(x))
         e1 = self.act(self.e1b(e1))                 # 4 @ H
         dense_in2 = torch.cat([e1, x], dim=1)       # 5 @ H
 
-        # -------- Encoder level 1 (H/2) --------
+        #Encoder level 1 (H/2)
         h2 = self.pool(dense_in2)                   # 5 @ H/2
         e2 = self.act(self.e2a(h2))
         e2 = self.act(self.e2b(e2))                 # 8 @ H/2
         dense_in3 = torch.cat([e2, h2], dim=1)      # 13 @ H/2
 
-        # -------- Encoder level 2 (H/4) --------
+        #Encoder level 2 (H/4)
         h3 = self.pool(dense_in3)                   # 13 @ H/4
         e3 = self.act(self.e3a(h3))
         e3 = self.act(self.e3b(e3))                 # 16 @ H/4
         dense_in4 = torch.cat([e3, h3], dim=1)      # 29 @ H/4
 
-        # -------- Encoder level 3 (H/8) --------
+        #Encoder level 3 (H/8)
         h4 = self.pool(dense_in4)                   # 29 @ H/8
         e4 = self.act(self.e4a(h4))
         e4 = self.act(self.e4b(e4))                 # 32 @ H/8
         dense_in5 = torch.cat([e4, h4], dim=1)      # 61 @ H/8
 
-        # -------- Encoder level 4 (H/16) bottom --------
+        #Encoder level 4 (H/16) bottom 
         h5 = self.pool(dense_in5)                   # 61 @ H/16
         e5 = self.act(self.e5a(h5))
         e5 = self.act(self.e5b(e5))                 # 64 @ H/16
 
-        # -------- Decoder level 3 (H/8) --------
+
+        #Decoder level 3 (H/8)
         u4 = self.up(e5)                            # 64 @ H/8
         d4_in = torch.cat([u4, dense_in5], dim=1)   # 125 @ H/8
         d4 = self.act(self.d4a(d4_in))              # 32 @ H/8
         d4 = self.act(self.d4b(torch.cat([d4, dense_in5], dim=1)))  # 93 -> 32 @ H/8
         d4 = self.act(self.d4c(d4))                 # 32 @ H/8
 
-        # -------- Decoder level 2 (H/4) --------
+        #Decoder level 2 (H/4)
         u3 = self.up(d4)                            # 32 @ H/4
         d3_in = torch.cat([u3, dense_in4], dim=1)   # 61 @ H/4
         d3 = self.act(self.d3a(d3_in))              # 16 @ H/4
         d3 = self.act(self.d3b(torch.cat([d3, dense_in4], dim=1)))  # 45 -> 16 @ H/4
         d3 = self.act(self.d3c(d3))                 # 16 @ H/4
 
-        # -------- Decoder level 1 (H/2) --------
+        #Decoder level 1 (H/2)
         u2 = self.up(d3)                            # 16 @ H/2
         d2_in = torch.cat([u2, dense_in3], dim=1)   # 29 @ H/2
         d2 = self.act(self.d2a(d2_in))              # 8 @ H/2
         d2 = self.act(self.d2b(torch.cat([d2, dense_in3], dim=1)))  # 21 -> 8 @ H/2
         d2 = self.act(self.d2c(d2))                 # 8 @ H/2
 
-        # -------- Decoder level 0 (H) --------
+        #Decoder level 0 (H)
         u1 = self.up(d2)                            # 8 @ H
         d1_in = torch.cat([u1, dense_in2], dim=1)   # 13 @ H
         d1 = self.act(self.d1a(d1_in))              # 4 @ H
         d1 = self.act(self.d1b(torch.cat([d1, dense_in2], dim=1)))  # 9 -> 4 @ H
         d1 = self.act(self.d1c(d1))                 # 4 @ H
 
-        # -------- Final (must be 13 -> 1) --------
+        # Final (13 -> 1)
         dense_in2_h2 = self.pool(dense_in2)         # 5 @ H/2
         out_in = torch.cat([d2, dense_in2_h2], dim=1)  # 8 + 5 = 13 @ H/2
         logits = self.out(out_in)                   # 1 @ H/2
