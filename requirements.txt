@@ -1,5 +1,5 @@
 torch
-bumpy
+numpy
 scipy
 pandas
 matplotlib
