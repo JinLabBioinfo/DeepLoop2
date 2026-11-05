@@ -1,0 +1,9 @@
+torch
+bumpy
+scipy
+pandas
+matplotlib
+cooler
+tqdm
+wandb
+
